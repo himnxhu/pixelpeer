@@ -2,6 +2,16 @@
 
 This is a real-time video chat application called "PixelMeet" that connects random users for video conversations. The application is built as a full-stack web app using React on the frontend and Express with WebSocket support on the backend. It allows users to have anonymous video chats with strangers, similar to platforms like Omegle or Chatroulette.
 
+## Recent Changes (August 2, 2025)
+
+**Deployment Configuration Updates:**
+- Created complete local setup package in `pixelmeet-export/` directory
+- Added Vercel deployment configuration with `vercel.json`
+- Created Railway deployment configuration with `railway.json`
+- Added comprehensive deployment documentation
+- **Important**: Identified that Vercel does not support WebSocket connections required for real-time video chat
+- Recommended Railway, Render, or DigitalOcean as better deployment options for full functionality
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
