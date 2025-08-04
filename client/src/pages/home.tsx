@@ -17,6 +17,7 @@ export default function Home() {
     remoteStream, 
     isVideoEnabled, 
     isAudioEnabled,
+    connectionState,
     toggleVideo,
     toggleAudio,
     createOffer,
@@ -26,6 +27,17 @@ export default function Home() {
     cleanup
   } = useWebRTC();
 
+  // Update connection status based on WebRTC state
+  useEffect(() => {
+    if (connectionState === 'connected') {
+      setConnectionStatus('connected');
+    } else if (connectionState === 'connecting') {
+      setConnectionStatus('connecting');
+    } else if (connectionState === 'disconnected') {
+      setConnectionStatus('disconnected');
+    }
+  }, [connectionState]);
+
   // Handle socket messages
   useEffect(() => {
     if (!socket) return;
@@ -33,6 +45,7 @@ export default function Home() {
     const handleMessage = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data);
+        console.log('Received socket message:', data);
         
         switch (data.type) {
           case 'waiting-for-peer':
@@ -43,40 +56,52 @@ export default function Home() {
             break;
             
           case 'peer-found':
-            setConnectionStatus('connected');
+            console.log('Peer found, creating WebRTC connection');
+            setConnectionStatus('connecting');
             setCurrentScreen('connected');
             setRoomId(data.roomId);
             setPeerId(data.peerId);
             
             // If we're peer1, create offer
             if (data.peerId === 'peer1') {
+              console.log('Creating offer as peer1');
               createOffer().then(offer => {
+                console.log('Sending offer:', offer);
                 sendMessage({
                   type: 'webrtc-offer',
                   offer: offer
                 });
+              }).catch(error => {
+                console.error('Error creating offer:', error);
               });
             }
             break;
             
           case 'webrtc-offer':
+            console.log('Received offer, creating answer');
             createAnswer(data.offer).then(answer => {
+              console.log('Sending answer:', answer);
               sendMessage({
                 type: 'webrtc-answer',
                 answer: answer
               });
+            }).catch(error => {
+              console.error('Error creating answer:', error);
             });
             break;
             
           case 'webrtc-answer':
+            console.log('Received answer, adding to peer');
             addAnswer(data.answer);
             break;
             
           case 'webrtc-ice-candidate':
+            console.log('Received ICE candidate, adding to peer');
             addIceCandidate(data.candidate);
             break;
             
           case 'peer-disconnected':
+            console.log('Peer disconnected');
             handleDisconnect();
             break;
             
@@ -107,6 +132,7 @@ export default function Home() {
       setConnectionStatus('connecting');
       
       // Find peer
+      console.log('Finding peer...');
       sendMessage({ type: 'find-peer' });
     } catch (error) {
       console.error('Error accessing media devices:', error);
@@ -115,6 +141,7 @@ export default function Home() {
   };
 
   const handleDisconnect = () => {
+    console.log('Disconnecting...');
     cleanup();
     setConnectionStatus('disconnected');
     setCurrentScreen('welcome');

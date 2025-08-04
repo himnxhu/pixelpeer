@@ -44,7 +44,19 @@ export default function VideoCallInterface({
   // Set up remote video stream
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
+      console.log('Setting remote video stream:', remoteStream);
+      console.log('Remote stream tracks:', remoteStream.getTracks());
       remoteVideoRef.current.srcObject = remoteStream;
+      
+      // Ensure the video plays
+      remoteVideoRef.current.onloadedmetadata = () => {
+        console.log('Remote video metadata loaded');
+        remoteVideoRef.current?.play().catch(console.error);
+      };
+      
+      remoteVideoRef.current.onerror = (error: Event) => {
+        console.error('Remote video error:', error);
+      };
     }
   }, [remoteStream]);
 
@@ -105,7 +117,7 @@ export default function VideoCallInterface({
             {/* Video Section */}
             <div className="xl:col-span-3 space-y-4">
               {/* Remote Video */}
-              <div className="relative bg-dark-800 rounded-2xl overflow-hidden shadow-2xl h-2/3">
+              <div className="relative bg-dark-800 rounded-2xl overflow-hidden shadow-2xl max-h-[600px] aspect-video">
                 {/* Placeholder when no remote connection */}
                 {!remoteStream && (
                   <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-dark-700 to-dark-800">
@@ -139,6 +151,22 @@ export default function VideoCallInterface({
                   playsInline
                 />
 
+                {/* Local Video Overlay */}
+                {localStream && (
+                  <div className="absolute top-4 right-4 w-32 h-24 bg-dark-800 rounded-lg overflow-hidden shadow-lg border-2 border-white">
+                    <video 
+                      ref={localVideoRef}
+                      className="w-full h-full object-cover"
+                      autoPlay 
+                      muted 
+                      playsInline
+                    />
+                    <div className="absolute bottom-1 left-1 bg-black bg-opacity-50 px-1 py-0.5 rounded text-xs">
+                      You
+                    </div>
+                  </div>
+                )}
+
                 {/* Remote Video Overlay Controls */}
                 {remoteStream && (
                   <>
@@ -149,7 +177,7 @@ export default function VideoCallInterface({
                       </div>
                     </div>
 
-                    <div className="absolute top-4 right-4 flex items-center space-x-2">
+                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-2">
                       <Button 
                         variant="ghost" 
                         size="icon"
@@ -163,69 +191,51 @@ export default function VideoCallInterface({
                 )}
               </div>
 
-              {/* Local Video + Controls */}
-              <div className="flex items-center space-x-4 h-1/3">
-                {/* Local Video */}
-                <div className="relative bg-dark-800 rounded-xl overflow-hidden shadow-lg flex-1 h-full">
-                  <video 
-                    ref={localVideoRef}
-                    className="w-full h-full object-cover"
-                    autoPlay 
-                    muted 
-                    playsInline
-                  />
-                  
-                  <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 px-2 py-1 rounded text-xs">
-                    You
-                  </div>
-                </div>
+              {/* Call Controls */}
+              <div className="flex items-center justify-center space-x-4">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`w-12 h-12 rounded-xl transition-all ${
+                    isVideoEnabled 
+                      ? 'bg-dark-700 hover:bg-dark-600 text-white' 
+                      : 'bg-red-600 hover:bg-red-700 text-white'
+                  }`}
+                  onClick={onToggleVideo}
+                >
+                  {isVideoEnabled ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
+                </Button>
 
-                {/* Call Controls */}
-                <div className="flex flex-col space-y-3">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`w-12 h-12 rounded-xl transition-all ${
-                      isVideoEnabled 
-                        ? 'bg-dark-700 hover:bg-dark-600 text-white' 
-                        : 'bg-red-600 hover:bg-red-700 text-white'
-                    }`}
-                    onClick={onToggleVideo}
-                  >
-                    {isVideoEnabled ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
-                  </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`w-12 h-12 rounded-xl transition-all ${
+                    isAudioEnabled 
+                      ? 'bg-dark-700 hover:bg-dark-600 text-white' 
+                      : 'bg-red-600 hover:bg-red-700 text-white'
+                  }`}
+                  onClick={onToggleAudio}
+                >
+                  {isAudioEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+                </Button>
 
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`w-12 h-12 rounded-xl transition-all ${
-                      isAudioEnabled 
-                        ? 'bg-dark-700 hover:bg-dark-600 text-white' 
-                        : 'bg-red-600 hover:bg-red-700 text-white'
-                    }`}
-                    onClick={onToggleAudio}
-                  >
-                    {isAudioEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-                  </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-12 h-12 bg-red-600 hover:bg-red-700 rounded-xl text-white transition-all"
+                  onClick={onEndCall}
+                >
+                  <Phone className="w-4 h-4" />
+                </Button>
 
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="w-12 h-12 bg-red-600 hover:bg-red-700 rounded-xl text-white transition-all"
-                    onClick={onEndCall}
-                  >
-                    <Phone className="w-4 h-4" />
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="w-12 h-12 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white transition-all"
-                    onClick={onNextChat}
-                  >
-                    <SkipForward className="w-4 h-4" />
-                  </Button>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-12 h-12 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white transition-all"
+                  onClick={onNextChat}
+                >
+                  <SkipForward className="w-4 h-4" />
+                </Button>
               </div>
             </div>
 
