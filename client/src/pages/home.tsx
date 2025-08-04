@@ -125,19 +125,28 @@ export default function Home() {
   const handleStartChat = async () => {
     if (!socketConnected) {
       console.error('Socket not connected');
+      alert('WebSocket connection failed. Please refresh the page.');
       return;
     }
 
     try {
+      console.log('Starting chat - requesting media permissions...');
       // Request media permissions
       await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      console.log('Media permissions granted successfully');
       
       setCurrentScreen('connecting');
       setConnectionStatus('connecting');
       
       // Find peer
-      console.log('Finding peer...');
-      sendMessage({ type: 'find-peer' });
+      console.log('Sending find-peer message to server...');
+      const success = sendMessage({ type: 'find-peer' });
+      console.log('Find-peer message sent:', success);
+      
+      if (!success) {
+        console.error('Failed to send find-peer message');
+        alert('Failed to connect to server. Please refresh the page.');
+      }
     } catch (error) {
       console.error('Error accessing media devices:', error);
       alert('Please allow camera and microphone access to start chatting');

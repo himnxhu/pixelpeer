@@ -72,11 +72,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   async function handleFindPeer(ws: ClientSocket) {
+    console.log(`🔍 Client ${ws.id} requesting to find peer`);
+    
     // Try to find an available room
     let room = await storage.findAvailableRoom();
+    console.log(`🔍 Available room found:`, room ? room.id : 'none');
     
     if (room) {
       // Join existing room as peer2
+      console.log(`🔗 Client ${ws.id} joining existing room ${room.id} as peer2`);
       const updatedRoom = await storage.updateRoom(room.id, { peer2: ws.id });
       if (updatedRoom) {
         ws.roomId = updatedRoom.id;
@@ -85,6 +89,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Notify both peers
         const peer1 = clients.get(updatedRoom.peer1!);
         if (peer1 && peer1.readyState === WebSocket.OPEN) {
+          console.log(`📤 Notifying peer1 (${updatedRoom.peer1}) that peer2 joined`);
           peer1.send(JSON.stringify({ 
             type: 'peer-found', 
             roomId: updatedRoom.id, 
@@ -93,6 +98,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }));
         }
         
+        console.log(`📤 Notifying peer2 (${ws.id}) that peer1 is ready`);
         ws.send(JSON.stringify({ 
           type: 'peer-found', 
           roomId: updatedRoom.id, 
@@ -102,10 +108,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } else {
       // Create new room and wait for peer2
+      console.log(`🏠 Creating new room for client ${ws.id} as peer1`);
       room = await storage.createRoom({ peer1: ws.id, peer2: null });
       ws.roomId = room.id;
       ws.peerId = 'peer1';
       
+      console.log(`📤 Notifying peer1 (${ws.id}) to wait for peer`);
       ws.send(JSON.stringify({ 
         type: 'waiting-for-peer', 
         roomId: room.id,

@@ -12,21 +12,23 @@ export function useSocket() {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${protocol}//${window.location.host}/ws`;
       
+      console.log('Attempting to connect to WebSocket:', wsUrl);
       const ws = new WebSocket(wsUrl);
       
       ws.onopen = () => {
-        console.log('WebSocket connected');
+        console.log('✅ WebSocket connected successfully');
         setIsConnected(true);
         setReconnectAttempts(0);
       };
       
       ws.onclose = (event) => {
-        console.log('WebSocket disconnected:', event.code, event.reason);
+        console.log('❌ WebSocket disconnected:', event.code, event.reason);
         setIsConnected(false);
         setSocket(null);
         
         // Attempt to reconnect if not manually closed
         if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
+          console.log(`🔄 Attempting to reconnect (${reconnectAttempts + 1}/${maxReconnectAttempts})`);
           const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
           reconnectTimeoutRef.current = setTimeout(() => {
             setReconnectAttempts(prev => prev + 1);
@@ -36,12 +38,16 @@ export function useSocket() {
       };
       
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        console.error('❌ WebSocket error:', error);
+      };
+      
+      ws.onmessage = (event) => {
+        console.log('📨 WebSocket message received:', event.data);
       };
       
       setSocket(ws);
     } catch (error) {
-      console.error('Error creating WebSocket connection:', error);
+      console.error('❌ Error creating WebSocket connection:', error);
     }
   }, [reconnectAttempts]);
 
