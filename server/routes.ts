@@ -115,20 +115,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   async function handleWebRTCSignaling(ws: ClientSocket, message: any) {
-    if (!ws.roomId) return;
+    if (!ws.roomId) {
+      console.log('WebRTC signal: No room ID');
+      return;
+    }
     
     const room = await storage.getRoom(ws.roomId);
-    if (!room) return;
+    if (!room) {
+      console.log('WebRTC signal: Room not found');
+      return;
+    }
     
     const remotePeerId = ws.peerId === 'peer1' ? room.peer2 : room.peer1;
-    if (!remotePeerId) return;
+    if (!remotePeerId) {
+      console.log('WebRTC signal: No remote peer ID');
+      return;
+    }
+    
+    console.log(`WebRTC signal: ${message.type} from ${ws.id} to ${remotePeerId}`);
     
     const remotePeer = clients.get(remotePeerId);
     if (remotePeer && remotePeer.readyState === WebSocket.OPEN) {
+      console.log(`WebRTC signal: Sending ${message.type} to remote peer`);
       remotePeer.send(JSON.stringify({
         ...message,
         senderId: ws.id
       }));
+    } else {
+      console.log('WebRTC signal: Remote peer not available or not connected');
     }
   }
 

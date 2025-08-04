@@ -87,11 +87,14 @@ export function useWebRTC() {
       try {
         const peer = await createPeer(true);
         
-        peer.on('signal', (data: any) => {
+        // Wait for the first signal event which will be the offer
+        const handleSignal = (data: any) => {
           console.log('Creating offer signal:', data);
+          peer.off('signal', handleSignal);
           resolve(data);
-        });
+        };
         
+        peer.on('signal', handleSignal);
         peer.on('error', reject);
       } catch (error) {
         reject(error);
@@ -105,11 +108,14 @@ export function useWebRTC() {
       try {
         const peer = await createPeer(false);
         
-        peer.on('signal', (data: any) => {
+        // Wait for the first signal event which will be the answer
+        const handleSignal = (data: any) => {
           console.log('Creating answer signal:', data);
+          peer.off('signal', handleSignal);
           resolve(data);
-        });
+        };
         
+        peer.on('signal', handleSignal);
         peer.on('error', reject);
         
         console.log('Signaling with offer:', offer);

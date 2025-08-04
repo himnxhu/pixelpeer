@@ -46,6 +46,8 @@ export default function VideoCallInterface({
     if (remoteVideoRef.current && remoteStream) {
       console.log('Setting remote video stream:', remoteStream);
       console.log('Remote stream tracks:', remoteStream.getTracks());
+      console.log('Remote stream active:', remoteStream.active);
+      
       remoteVideoRef.current.srcObject = remoteStream;
       
       // Ensure the video plays
@@ -54,9 +56,25 @@ export default function VideoCallInterface({
         remoteVideoRef.current?.play().catch(console.error);
       };
       
-      remoteVideoRef.current.onerror = (error: Event) => {
+      remoteVideoRef.current.oncanplay = () => {
+        console.log('Remote video can play');
+      };
+      
+      remoteVideoRef.current.onplay = () => {
+        console.log('Remote video started playing');
+      };
+      
+      remoteVideoRef.current.onerror = (error: Event | string) => {
         console.error('Remote video error:', error);
       };
+      
+      // Force play attempt
+      setTimeout(() => {
+        if (remoteVideoRef.current && remoteVideoRef.current.paused) {
+          console.log('Attempting to play remote video...');
+          remoteVideoRef.current.play().catch(console.error);
+        }
+      }, 1000);
     }
   }, [remoteStream]);
 
@@ -150,6 +168,18 @@ export default function VideoCallInterface({
                   autoPlay 
                   playsInline
                 />
+
+                {/* Debug Info Overlay */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white text-xs p-2 rounded">
+                    <div>Status: {connectionStatus}</div>
+                    <div>Local Stream: {localStream ? 'Yes' : 'No'}</div>
+                    <div>Remote Stream: {remoteStream ? 'Yes' : 'No'}</div>
+                    {remoteStream && (
+                      <div>Remote Tracks: {remoteStream.getTracks().length}</div>
+                    )}
+                  </div>
+                )}
 
                 {/* Local Video Overlay */}
                 {localStream && (
