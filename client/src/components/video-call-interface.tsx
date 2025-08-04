@@ -37,6 +37,7 @@ export default function VideoCallInterface({
   // Set up local video stream
   useEffect(() => {
     if (localVideoRef.current && localStream) {
+      console.log('Setting local video stream:', localStream);
       localVideoRef.current.srcObject = localStream;
     }
   }, [localStream]);
@@ -175,14 +176,18 @@ export default function VideoCallInterface({
                     <div>Status: {connectionStatus}</div>
                     <div>Local Stream: {localStream ? 'Yes' : 'No'}</div>
                     <div>Remote Stream: {remoteStream ? 'Yes' : 'No'}</div>
+                    <div>Connection State: {connectionStatus}</div>
                     {remoteStream && (
                       <div>Remote Tracks: {remoteStream.getTracks().length}</div>
+                    )}
+                    {localStream && (
+                      <div>Local Tracks: {localStream.getTracks().length}</div>
                     )}
                   </div>
                 )}
 
-                {/* Local Video Overlay */}
-                {localStream && (
+                {/* Local Video Overlay - Show if we have local stream or are connected */}
+                {(localStream || connectionStatus === 'connected') && (
                   <div className="absolute top-4 right-4 w-32 h-24 bg-dark-800 rounded-lg overflow-hidden shadow-lg border-2 border-white">
                     <video 
                       ref={localVideoRef}

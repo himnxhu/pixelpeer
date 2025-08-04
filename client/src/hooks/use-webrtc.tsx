@@ -56,23 +56,34 @@ export function useWebRTC() {
 
     peer.on('connect', () => {
       console.log('Peer connected successfully');
+      console.log('Setting connection state to connected');
       setConnectionState('connected');
     });
 
     peer.on('stream', (stream: MediaStream) => {
       console.log('Received remote stream:', stream);
       console.log('Remote stream tracks:', stream.getTracks());
+      console.log('Remote stream active:', stream.active);
       setRemoteStream(stream);
     });
 
     peer.on('close', () => {
       console.log('Peer connection closed');
+      console.log('Setting connection state to disconnected');
       setConnectionState('disconnected');
       setRemoteStream(null);
     });
 
     peer.on('signal', (data: any) => {
       console.log('Peer signal event:', data.type);
+    });
+
+    peer.on('iceStateChange', (state: any) => {
+      console.log('ICE connection state changed:', state);
+    });
+
+    peer.on('connectionStateChange', (state: any) => {
+      console.log('Connection state changed:', state);
     });
 
     peerRef.current = peer;

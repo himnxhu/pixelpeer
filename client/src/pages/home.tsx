@@ -29,12 +29,16 @@ export default function Home() {
 
   // Update connection status based on WebRTC state
   useEffect(() => {
+    console.log('WebRTC connection state changed:', connectionState);
     if (connectionState === 'connected') {
       setConnectionStatus('connected');
+      console.log('Setting connection status to connected');
     } else if (connectionState === 'connecting') {
       setConnectionStatus('connecting');
+      console.log('Setting connection status to connecting');
     } else if (connectionState === 'disconnected') {
       setConnectionStatus('disconnected');
+      console.log('Setting connection status to disconnected');
     }
   }, [connectionState]);
 
